@@ -1,0 +1,22 @@
+Initial feedback on myself right after the video:
+I spent good portion of the time not realizing that something was occuring on the screen, but I just couldn't see it because it was too small
+I thought that I misunderstood how Rect worked, but it was more like that I didn't see the output.
+I changed the background to white to get better feedback this helped.
+Spent my time wasting on it at that point trying to get other objects on screen.
+
+
+Should go through and figure out how much time was spent researching, aimlessly moving my cursor about, how long it took me to get a screen up and running, how long for a background, how long for objects on the screen etc.
+Event timeline:
+1st window on screen around the 10 minute mark. Futzed with window size for about 1.5 minutes
+
+Game loop and quit function done around the 16 minute mark
+Trying to get changes/fill to show up on game from 16 minute to 20:40 mark -> had problem with the flip command
+From the 20:40 mark till 21 minute mark tried to make the background color more appetizing
+From the 21 minute mark onward to 33:48 tried to get a rect to appear on screen
+From 33:48 to 39:48 try to figure out the position of the rects and where to put them
+39:48 to 44:39 try to add in the walls of the pong game
+Quit after this time because no time left.
+
+Research time: majority is this
+Coding time: not very much of this
+
