@@ -12,7 +12,7 @@ Initial feedback on myself right after the video:
 
 
 Bugs:
-can't move two paddles at once -> input bug can't take in multiple inputs at once
+can't move two paddles at once -> input bug can't take in multiple inputs at once -> it is because of the delay hack.
 
 Hacks:
 Delay hack for movement cases
