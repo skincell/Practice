@@ -1,0 +1,29 @@
+Alright Timings:
+first window 3:30 with event queue
+Have everything set up 15:42
+movement for paddles: 24:10
+collision at 30:00
+Circle appears at 35:00
+Circles moving 39:00
+Rects colliding 48:00
+Rects bouncing 49:30
+
+
+
+
+
+Ideas for game modes:
+Game modes have a center ball send off pong balls for both players to fend off
+Have a little ball inside the pong paddle move the paddle across the screen
+Have the one who sent out the ball have control of the walls instead of their paddle after they send it off
+Could have a king of the hill version where the one with the points sends out the balls and has x amount of time to have everybody lose.
+
+
+Hurrahs:
+Fixed the double movement issue -> have a counter which controls this.
+
+
+Things to think about:
+better collision detection
+a guarenteed fps counter how are these implemented...
+I am repeating using the collision detection for each set of movement options, counter/speed control for each set, etc.
