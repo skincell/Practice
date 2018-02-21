@@ -1,0 +1,6 @@
+Feature List:
+->Add in pictures for paddles -> breaks collision -> to bitmaps from now on (This scales for the new different objects as a feature hardiness)
+-> Change background depending on things happening in the game?
+-> add in ball collision logic
+-> add in paddle to wall collision logic
+
