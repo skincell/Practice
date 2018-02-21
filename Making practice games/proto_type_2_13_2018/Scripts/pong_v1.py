@@ -1,40 +1,46 @@
 import pygame
-import numpy as np
-# Checks which keys are pressed and does behavior on those
 import math
-pygame.init()
 
 class rect_info():
+    # Rect info class
     def __init__(self, x, y, width, height, color):
+        # global tracking ID, so every rect does not have the same numbering
         global ID_number
+        # Basic rect properties
         self.obj_x = x
         self.obj_y = y
         self.width = width
         self.height = height
         self.color = color
+        # Make sure that this structure can be identified as a Rect for the renderer, etc.
         self.ID = "Rect" + str(ID_number)
         ID_number += 1
 
 # Any other class besides the Rect class is required to have a non-Rect name for an ID and have a collision rect inside
 class ball_info():
-    counter = 0
     def __init__(self, x, y, radius, color):
         global ID_number
+        # Basic circle properties
         self.obj_x = x
         self.obj_y = y
         self.radius = radius
         self.color = color
-
+        # The rect x and y coordinates used for collisions
         x_prime = math.sqrt(2) / 2.0 * radius
         y_prime = x_prime
+        # Collision rect info for the circle
         self.rect_info = rect_info(int(self.obj_x - x_prime), int(self.obj_y - y_prime),
                                    int(2 * x_prime), int(2 * y_prime) , color)
+
+        # An ID that allows other functions to know that this is a ball object for rendering, collision, etc.
         self.ID = "Ball" + str(ID_number)
         ID_number+= 1
+
+
 # TODO put a limit on the speed for any object
 # TODO implement acceleration
 # TODO implement collision  options: use the pythoageron thereom (regular shapes), bitmap + (irregular shapes)minkowsi based collision
-# Then let accleration occur
+# Movement functions
 def move_up(object_renderer_info):
     object_renderer_info.obj_y -= 1
 
@@ -47,30 +53,44 @@ def move_right(object_renderer_info):
 def move_left(object_renderer_info):
     object_renderer_info.obj_x -= 1
 
+# Handle key input and movement
 def handle_keys_and_movement(renderers):
 
+    # Get the keys that are currently pressed
     keys = pygame.key.get_pressed()
 
+    # Paddle 1 controls
     if keys[pygame.K_w]:
         move_up(renderers["paddle1"])
     if keys[pygame.K_s]:
         move_down(renderers["paddle1"])
 
+    # Paddle 2 controls
     if keys[pygame.K_UP]:
         move_up(renderers["paddle2"])
     if keys[pygame.K_DOWN]:
         move_down(renderers["paddle2"])
+    # Paddle 2 testing collision controls
     if keys[pygame.K_LEFT]:
         move_left(renderers["paddle2"])
 
-    # create ball movement increment
-    # possibly add the paddle increment
+    # TODO create ball movement increment
+    # TODO possibly add the paddle
+
 def detect_collisions(renderers):
     """
+    Detects any collisions between the renderers that are to be shown and returns a dict of objects that are colliding
 
     :param renderers:
     :return:
     """
+
+    # TODO add in extra data about the collisions, so the collision resolution can do something about it -> or just have it take the velocity or offset to do this?
+    # brainstorm -> keep track of the velocity and do something to do it -> transformations and everything to that value and the acceleration, etc.
+    # This will be crazy to figure out how to do momentum transfer etc. This might be complicated to put together. How do we want to put this together??
+    # It might be fun to use alternate forms of those equations.. etc.
+    # brainstorm, check for the collision and note the collisions then determine what to do with it.
+    # This will cause problems if the object is moving too fast and the object looks to the program to be on the other side then it will bounce off in the wrong direction
 
     renderer_keys = list(renderers.keys())
     num_renderers = len(renderer_keys)
@@ -114,8 +134,6 @@ def detect_collisions(renderers):
                 # End Code Comment Block 001
     return collisions
 
-
-
 def handle_collisions(renderers, collisions):
     # Resolve collision
     # TODO create something to handle collisions with ball with ball
@@ -126,6 +144,8 @@ def handle_collisions(renderers, collisions):
     # want the velocity and acceleration to work together
     # bounce angles
     pass
+# Initialize the game
+pygame.init()
 
 # Initialize the initial screen size, and set the colors
 width_height_screen = (1200, 300)
