@@ -1,6 +1,15 @@
 import pygame
 import math
 
+class movement_info():
+    def __init__(self, v0, a0):
+        self.velocity_x = v0
+        self.velocity_y = v0
+        self.acceleration_x = a0
+        self.acceleration_y = a0
+
+        # maybe add an ID to this
+
 class rect_info():
     # Rect info class
     def __init__(self, x, y, width, height, color):
@@ -15,6 +24,7 @@ class rect_info():
         # Make sure that this structure can be identified as a Rect for the renderer, etc.
         self.ID = "Rect" + str(ID_number)
         ID_number += 1
+        self.movement = movement_info(0, 1)
 
 # Any other class besides the Rect class is required to have a non-Rect name for an ID and have a collision rect inside
 class ball_info():
@@ -35,17 +45,41 @@ class ball_info():
         # An ID that allows other functions to know that this is a ball object for rendering, collision, etc.
         self.ID = "Ball" + str(ID_number)
         ID_number+= 1
+        self.movement = movement_info(0, 1)
 
 
-# TODO put a limit on the speed for any object
-# TODO implement acceleration
 # TODO implement collision  options: use the pythoageron thereom (regular shapes), bitmap + (irregular shapes)minkowsi based collision
 # Movement functions
 def move_up(object_renderer_info):
-    object_renderer_info.obj_y -= 1
+    # limit to acceleration
+    if abs(object_renderer_info.movement.velocity_y) < 5:  # car speed max
+        object_renderer_info.movement.velocity_y -= object_renderer_info.movement.acceleration_y
+
+    # always move
+    object_renderer_info.obj_y += object_renderer_info.movement.velocity_y
+
+def move_up_v1(object_renderer_info):
+    # always move
+    object_renderer_info.obj_y -= 5
+
+def move_down_v1(object_renderer_info):
+    # always move
+    object_renderer_info.obj_y += 5
+
+def stop_up(object_renderer_info):
+    object_renderer_info.movement.velocity_y += 1 # constant slow down
+    if abs(object_renderer_info.movement.velocity_y) != 0:
+        object_renderer_info.obj_y += object_renderer_info.movement.velocity_y
+
+def stop_down(object_renderer_info):
+    object_renderer_info.movement.velocity_y -= 1 # constant slow down
+    if abs(object_renderer_info.movement.velocity_y) != 0:
+        object_renderer_info.obj_y += object_renderer_info.movement.velocity_y
 
 def move_down(object_renderer_info):
-    object_renderer_info.obj_y += 1
+    if object_renderer_info.movement.velocity_y < 5:  # car speed max
+        object_renderer_info.movement.velocity_y += object_renderer_info.movement.acceleration_y
+    object_renderer_info.obj_y += object_renderer_info.movement.velocity_y
 
 def move_right(object_renderer_info):
     object_renderer_info.obj_x += 1
@@ -59,17 +93,22 @@ def handle_keys_and_movement(renderers):
     # Get the keys that are currently pressed
     keys = pygame.key.get_pressed()
 
-    # Paddle 1 controls
+    # Paddle 1 acceleration
     if keys[pygame.K_w]:
         move_up(renderers["paddle1"])
+    elif renderers["paddle1"].movement.velocity_y < 0:
+        stop_up(renderers["paddle1"])
+
     if keys[pygame.K_s]:
         move_down(renderers["paddle1"])
+    elif renderers["paddle1"].movement.velocity_y > 0:
+        stop_down(renderers["paddle1"])
 
     # Paddle 2 controls
     if keys[pygame.K_UP]:
-        move_up(renderers["paddle2"])
+        move_up_v1(renderers["paddle2"])
     if keys[pygame.K_DOWN]:
-        move_down(renderers["paddle2"])
+        move_down_v1(renderers["paddle2"])
     # Paddle 2 testing collision controls
     if keys[pygame.K_LEFT]:
         move_left(renderers["paddle2"])
@@ -193,6 +232,9 @@ clock = pygame.time.Clock()
 # Game loop boolean
 game_is_running = True
 
+fps = 30
+time_tick_interval = 1.0 / fps
+
 # Main game loop
 while game_is_running:
 
@@ -227,7 +269,8 @@ while game_is_running:
     # Push the updates to the screen
     pygame.display.flip()
     # Keep this clock ticking for 30 fps
-    clock.tick(30)
+    clock.tick(fps)
+
 
 # Close the game
 pygame.quit()
