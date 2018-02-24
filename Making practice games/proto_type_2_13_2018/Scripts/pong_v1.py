@@ -47,39 +47,24 @@ class ball_info():
         ID_number+= 1
         self.movement = movement_info(0, 1)
 
-
 # TODO implement collision  options: use the pythoageron thereom (regular shapes), bitmap + (irregular shapes)minkowsi based collision
 # Movement functions
 def move_up(object_renderer_info):
     # limit to acceleration
-    if abs(object_renderer_info.movement.velocity_y) < 5:  # car speed max
+    if abs(object_renderer_info.movement.velocity_y) < 10:  # car speed max
         object_renderer_info.movement.velocity_y -= object_renderer_info.movement.acceleration_y
-
-    # always move
-    object_renderer_info.obj_y += object_renderer_info.movement.velocity_y
-
-def move_up_v1(object_renderer_info):
-    # always move
-    object_renderer_info.obj_y -= 5
-
-def move_down_v1(object_renderer_info):
-    # always move
-    object_renderer_info.obj_y += 5
 
 def stop_up(object_renderer_info):
     object_renderer_info.movement.velocity_y += 1 # constant slow down
-    if abs(object_renderer_info.movement.velocity_y) != 0:
-        object_renderer_info.obj_y += object_renderer_info.movement.velocity_y
 
 def stop_down(object_renderer_info):
     object_renderer_info.movement.velocity_y -= 1 # constant slow down
-    if abs(object_renderer_info.movement.velocity_y) != 0:
-        object_renderer_info.obj_y += object_renderer_info.movement.velocity_y
 
 def move_down(object_renderer_info):
-    if object_renderer_info.movement.velocity_y < 5:  # car speed max
+    if object_renderer_info.movement.velocity_y < 10:  # car speed max
         object_renderer_info.movement.velocity_y += object_renderer_info.movement.acceleration_y
-    object_renderer_info.obj_y += object_renderer_info.movement.velocity_y
+
+# Currently there is no max speed for a ball.
 
 def move_right(object_renderer_info):
     object_renderer_info.obj_x += 1
@@ -106,13 +91,28 @@ def handle_keys_and_movement(renderers):
 
     # Paddle 2 controls
     if keys[pygame.K_UP]:
-        move_up_v1(renderers["paddle2"])
+        move_up(renderers["paddle2"])
+    elif renderers["paddle2"].movement.velocity_y < 0:
+        stop_up(renderers["paddle2"])
+
     if keys[pygame.K_DOWN]:
-        move_down_v1(renderers["paddle2"])
-    # Paddle 2 testing collision controls
+        move_down(renderers["paddle2"])
+    elif renderers["paddle2"].movement.velocity_y > 0:
+        stop_down(renderers["paddle2"])
+    # Paddle 2 controls
     if keys[pygame.K_LEFT]:
         move_left(renderers["paddle2"])
 
+    # movement loop
+    for renderer in renderers:
+        if "Rect" in renderers[renderer].ID:
+            renderers[renderer].obj_y += renderers[renderer].movement.velocity_y
+            renderers[renderer].obj_x += renderers[renderer].movement.velocity_x
+        else:
+            renderers[renderer].obj_y += renderers[renderer].movement.velocity_y
+            renderers[renderer].obj_x += renderers[renderer].movement.velocity_x
+            renderers[renderer].rect_info.obj_y += renderers[renderer].movement.velocity_y
+            renderers[renderer].rect_info.obj_x += renderers[renderer].movement.velocity_x
     # TODO create ball movement increment
     # TODO possibly add the paddle
 
@@ -146,6 +146,7 @@ def detect_collisions(renderers):
         else:
             rect1 = pygame.Rect((renderer.rect_info.obj_x, renderer.rect_info.obj_y, renderer.rect_info.width,
                                  renderer.rect_info.height))
+
         for check_number in range(render_number + 1, num_renderers):
             # End Code Comment Block 000
             """
@@ -178,11 +179,31 @@ def handle_collisions(renderers, collisions):
     # TODO create something to handle collisions with ball with ball
     # TODO create something to handle collisions with rect with rect
     # TODO create something to handle collisions with ball and rect
+    for collision1 in collisions:
+        # renderers[collision1].obj_x = -renderers[collision1].movement.velocity_x
+        # renderers[collision1].obj_y = -renderers[collision1].movement.velocity_y
+        # renderers[collision1].movement.velocity_y = -renderers[collision1].movement.velocity_y
+        # renderers[collision1].movement.velocity_x = -renderers[collision1].movement.velocity_x
+        for collision2 in collisions[collision1]:
+
+            # Moves us out of the collision
+            renderers[collision2].obj_x -= renderers[collision2].movement.velocity_x
+            renderers[collision2].obj_y -= renderers[collision2].movement.velocity_y
+            # Makes us go in the opposite direction
+            renderers[collision2].movement.velocity_y = -renderers[collision2].movement.velocity_y
+            renderers[collision2].movement.velocity_x = -renderers[collision2].movement.velocity_x
+
+            # Ball logic to impart speed/velocity from paddle/walls to ball
+            if "Rect" not in renderers[collision2].ID:
+               renderers[collision2].movement.velocity_y += renderers[collision1].movement.velocity_y
+               renderers[collision2].movement.velocity_x += renderers[collision1].movement.velocity_x
+
+        # move the collision object back the other way if it is the one moving
 
     # want some sense of momentum transfer?
     # want the velocity and acceleration to work together
     # bounce angles
-    pass
+
 # Initialize the game
 pygame.init()
 
@@ -223,6 +244,8 @@ wall2 = rect_info(wall_x, width_height_screen[1] - wall_height - wall_y, wall_wi
 
 ball1 = ball_info(circleXpos, circleYpos, circle_radius, paddle_color)
 
+ball1.movement.velocity_x = 1
+
 # Dict of info to renderer each time
 renderers = {'paddle1':paddle1, 'paddle2':paddle2, 'wall1':wall1, 'wall2':wall2, 'ball': ball1}
 
@@ -243,7 +266,9 @@ while game_is_running:
     for event in events:
         if event.type == pygame.QUIT:
             game_is_running = False
-
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                game_is_running = False
     # Handle input and movement for now
     handle_keys_and_movement(renderers)
 
