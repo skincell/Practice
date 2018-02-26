@@ -1,5 +1,6 @@
 import pygame
 import math
+import numpy as np
 
 class movement_info():
     def __init__(self, v0, a0):
@@ -21,6 +22,36 @@ class rect_info():
         self.width = width
         self.height = height
         self.color = color
+
+        # expect the ability to rotate these but still not sure
+        # Where my boundaries are currently -> this all changes if my assumptions change (all rects for collision)
+        self.normal_vectors = [ np.array([1, 0]), np.array([0, -1]), np.array([-1, 0]), np.array([0, 1])]
+        # upper right corner
+        point_1 = [x + width, y]
+        # upper left corner
+        point_2 = [x, y]
+        # lower left corner
+        point_3 = [x, y + height]
+        # lower right corner
+        point_4 = [x + width, y + height]
+
+        # angles for the corresponding corners
+        angle1 = np.arctan2(point_1[1], point_1[0])
+        angle2 = np.arctan2(point_2[1], point_2[0])
+        # adding 2* pi to put this into positive angle space
+        angle3 = np.arctan2(point_3[1], point_3[0]) + 2 * math.pi
+        angle4 = np.arctan2(point_4[1], point_4[0]) + 2 * math.pi
+
+        # right region bounds
+        region_1_angles = [angle4, angle1]
+        # upper region bounds
+        region_2_angles = [angle1, angle2]
+        # left region bounds
+        region_3_angles = [angle2, angle3]
+        # bottom region bounds
+        region_4_angles = [angle3, angle4]
+
+        self.region_angles = [region_1_angles, region_2_angles, region_3_angles, region_4_angles]
         # Make sure that this structure can be identified as a Rect for the renderer, etc.
         self.ID = "Rect" + str(ID_number)
         ID_number += 1
@@ -113,8 +144,6 @@ def handle_keys_and_movement(renderers):
             renderers[renderer].obj_x += renderers[renderer].movement.velocity_x
             renderers[renderer].rect_info.obj_y += renderers[renderer].movement.velocity_y
             renderers[renderer].rect_info.obj_x += renderers[renderer].movement.velocity_x
-    # TODO create ball movement increment
-    # TODO possibly add the paddle
 
 def detect_collisions(renderers):
     """
@@ -180,23 +209,63 @@ def handle_collisions(renderers, collisions):
     # TODO create something to handle collisions with rect with rect
     # TODO create something to handle collisions with ball and rect
     for collision1 in collisions:
-        # renderers[collision1].obj_x = -renderers[collision1].movement.velocity_x
-        # renderers[collision1].obj_y = -renderers[collision1].movement.velocity_y
-        # renderers[collision1].movement.velocity_y = -renderers[collision1].movement.velocity_y
-        # renderers[collision1].movement.velocity_x = -renderers[collision1].movement.velocity_x
         for collision2 in collisions[collision1]:
 
             # Moves us out of the collision
             renderers[collision2].obj_x -= renderers[collision2].movement.velocity_x
             renderers[collision2].obj_y -= renderers[collision2].movement.velocity_y
-            # Makes us go in the opposite direction
-            renderers[collision2].movement.velocity_y = -renderers[collision2].movement.velocity_y
-            renderers[collision2].movement.velocity_x = -renderers[collision2].movement.velocity_x
 
             # Ball logic to impart speed/velocity from paddle/walls to ball
             if "Rect" not in renderers[collision2].ID:
-               renderers[collision2].movement.velocity_y += renderers[collision1].movement.velocity_y
-               renderers[collision2].movement.velocity_x += renderers[collision1].movement.velocity_x
+                center_xy = np.array([renderers[collision1].obj_x + renderers[collision1].width / 2,
+                                             renderers[collision1].obj_y + renderers[collision1].height / 2])
+
+                direction_vector = np.array([renderers[collision2].obj_x - center_xy[0], renderers[collision2].obj_y - center_xy[1]])
+
+                direction_angle = np.arctan2(direction_vector[1], direction_vector[0])
+                if direction_angle < 0:
+                    # make the angle in the positive angle space
+                    direction_angle += 2 * math.pi
+
+
+                normal_vector_index = 10000000 # throws an error hopefully if not overwritten
+                for region_number,region_angle in enumerate(renderers[collision1].region_angles):
+
+                    # If we hit a triangle around the corner case then we go back the direction that we came
+                    if region_angle[1] == direction_angle or region_angle[0] == direction_angle:
+                        # TODO may need to adjust this space to be a little more broad for corner hits - gameplay stuff
+                        renderers[collision2].movement.velocity_y = -renderers[collision2].movement.velocity_y
+                        renderers[collision2].movement.velocity_x = -renderers[collision2].movement.velocity_x
+
+                    # If we are in a region with a continous angle space
+                    elif region_angle[1] - region_angle[0] > 0:
+                        # we check to see if the direction angle sits inside of it
+                        if region_angle[1] > direction_angle > region_angle[0]:
+                                normal_vector_index = region_number
+                                break
+                    # This one checks if we are within the discontinuous space
+                    elif (direction_angle > region_angle[0] and direction_angle > region_angle[1]) or\
+                            (direction_angle < region_angle[0] and direction_angle < region_angle[1]):
+                        normal_vector_index = region_number
+                        break
+
+                velocity_vector = np.array([renderers[collision2].movement.velocity_x, renderers[collision2].movement.velocity_y])
+                #velocity_vector = velocity_vector / np.linalg.norm(velocity_vector)
+                new_velocity = velocity_vector - 2 * np.dot(velocity_vector, renderers[collision1].normal_vectors[normal_vector_index]) * renderers[collision1].normal_vectors[normal_vector_index]
+
+                # TODO hits a wall stalls then goes through it rapidly
+                renderers[collision2].movement.velocity_x = new_velocity[0]
+                renderers[collision2].movement.velocity_y = new_velocity[1]
+                # TODO Debug the bugs
+
+                #  adds the speed of the paddle and the ball -> pulls from the linear assumption of being able to add things together and it being equivalent
+                renderers[collision2].movement.velocity_y += renderers[collision1].movement.velocity_y
+                renderers[collision2].movement.velocity_x += renderers[collision1].movement.velocity_x
+
+            else:
+                # Makes us go in the opposite direction which is something that I want for the rects but not the ball
+                renderers[collision2].movement.velocity_y = -renderers[collision2].movement.velocity_y
+                renderers[collision2].movement.velocity_x = -renderers[collision2].movement.velocity_x
 
         # move the collision object back the other way if it is the one moving
 
