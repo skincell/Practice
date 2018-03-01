@@ -26,30 +26,34 @@ class rect_info():
         # expect the ability to rotate these but still not sure
         # Where my boundaries are currently -> this all changes if my assumptions change (all rects for collision)
         self.normal_vectors = [ np.array([1, 0]), np.array([0, -1]), np.array([-1, 0]), np.array([0, 1])]
-        # upper right corner
-        point_1 = [x + width, y]
-        # upper left corner
-        point_2 = [x, y]
-        # lower left corner
-        point_3 = [x, y + height]
+
+        centerxy = [x + width / 2, y + height / 2]
+
         # lower right corner
-        point_4 = [x + width, y + height]
+        point_1 = [x + width - centerxy[0], y + height - centerxy[1]]
+        # upper right corner
+        point_2 = [x + width - centerxy[0], y - centerxy[1]]
+
+        # upper left corner
+        point_3 = [x - centerxy[0], y - centerxy[1]]
+        # lower left corner
+        point_4 = [x - centerxy[0], y + height - centerxy[1]]
 
         # angles for the corresponding corners
         angle1 = np.arctan2(point_1[1], point_1[0])
-        angle2 = np.arctan2(point_2[1], point_2[0])
+        angle2 = np.arctan2(point_2[1], point_2[0]) + 2 * math.pi
         # adding 2* pi to put this into positive angle space
         angle3 = np.arctan2(point_3[1], point_3[0]) + 2 * math.pi
-        angle4 = np.arctan2(point_4[1], point_4[0]) + 2 * math.pi
+        angle4 = np.arctan2(point_4[1], point_4[0])
 
         # right region bounds
-        region_1_angles = [angle4, angle1]
+        region_1_angles = [angle2, angle1]
         # upper region bounds
-        region_2_angles = [angle1, angle2]
+        region_2_angles = [angle3, angle2]
         # left region bounds
-        region_3_angles = [angle2, angle3]
+        region_3_angles = [angle4, angle3]
         # bottom region bounds
-        region_4_angles = [angle3, angle4]
+        region_4_angles = [angle1, angle4]
 
         self.region_angles = [region_1_angles, region_2_angles, region_3_angles, region_4_angles]
         # Make sure that this structure can be identified as a Rect for the renderer, etc.
@@ -81,8 +85,9 @@ class ball_info():
 # TODO implement collision  options: use the pythoageron thereom (regular shapes), bitmap + (irregular shapes)minkowsi based collision
 # Movement functions
 def move_up(object_renderer_info):
+    # TODO might have an error where two renderers hit something at the same time?? while a ball hits??
     # limit to acceleration
-    if abs(object_renderer_info.movement.velocity_y) < 10:  # car speed max
+    if abs(object_renderer_info.movement.velocity_y) < 8:  # car speed max
         object_renderer_info.movement.velocity_y -= object_renderer_info.movement.acceleration_y
 
 def stop_up(object_renderer_info):
@@ -92,7 +97,7 @@ def stop_down(object_renderer_info):
     object_renderer_info.movement.velocity_y -= 1 # constant slow down
 
 def move_down(object_renderer_info):
-    if object_renderer_info.movement.velocity_y < 10:  # car speed max
+    if object_renderer_info.movement.velocity_y < 8:  # car speed max
         object_renderer_info.movement.velocity_y += object_renderer_info.movement.acceleration_y
 
 # Currently there is no max speed for a ball.
